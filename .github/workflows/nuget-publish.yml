@@ -55,7 +55,7 @@ jobs:
 
     # ⬇⬇ This is the Trusted Publishing step from NuGet.org ⬇⬇
     - name: Publish to NuGet via Trusted Publishing
-      uses: NuGet/actions/NuGet-Trusted-Publisher@v1
+      uses: NuGet/NuGet-Trusted-Publisher@v1
       with:
         nuget-folder: "./nupkgs"
         # No API key required — handled automatically!
