@@ -1,26 +1,27 @@
-name: Build and Publish NuGet (Trusted)
+name: Publish Srota to NuGet (Trusted Publishing)
 
 on:
   push:
     tags:
-      - 'v*.*.*'
-  release:
-    types: [published]
+      - "v*.*.*"   # e.g. v1.2.3
 
 permissions:
+  id-token: write     # Required for OIDC
   contents: read
-  id-token: write   # needed for OIDC
   packages: write
 
 jobs:
-  build-and-publish:
+  build-pack-publish:
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@<COMMIT_SHA>   # pin to specific SHA
+    - name: Checkout
+      uses: actions/checkout@v4
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@<COMMIT_SHA>
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: "8.x"
 
     - name: Restore
       run: dotnet restore
@@ -28,24 +29,33 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore
 
+    - name: Run Tests
+      run: |
+        if compgen -G "*Tests/*.csproj" > /dev/null; then
+          dotnet test --no-build --configuration Release
+        else
+          echo "No tests found — skipping."
+        fi
+
+    - name: Determine Package Version
+      id: version
+      run: |
+        TAG=${GITHUB_REF#refs/tags/}
+        VERSION=${TAG#v}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+      shell: bash
+
     - name: Pack
       run: |
-        dotnet pack ./src/Srota/Srota.csproj \
+        dotnet pack ./Srota/Srota.csproj \
           --configuration Release \
           -o ./nupkgs \
-          /p:PackageVersion=${{ github.ref_name }} \
+          /p:PackageVersion=${{ steps.version.outputs.version }} \
           --no-build
 
-    - name: Request NuGet temporary API key
-      run: |
-        # Example assuming nuget CLI or custom logic to exchange OIDC token for a temporary key
-        # This part depends on nuget.org instructions for trusted publishing
-        # e.g. dotnet nuget trust-publish (hypothetical) ...
-
-    - name: Publish to NuGet.org
-      run: |
-        for pkg in ./nupkgs/*.nupkg; do
-          dotnet nuget push "$pkg" \
-            -s https://api.nuget.org/v3/index.json \
-            # no -k or use the temp key from previous step
-        done
+    # ⬇⬇ This is the Trusted Publishing step from NuGet.org ⬇⬇
+    - name: Publish to NuGet via Trusted Publishing
+      uses: NuGet/actions/NuGet-Trusted-Publisher@v1
+      with:
+        nuget-folder: "./nupkgs"
+        # No API key required — handled automatically!
