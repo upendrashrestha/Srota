@@ -1,0 +1,51 @@
+name: Build and Publish NuGet (Trusted)
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write   # needed for OIDC
+  packages: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@<COMMIT_SHA>   # pin to specific SHA
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@<COMMIT_SHA>
+
+    - name: Restore
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Pack
+      run: |
+        dotnet pack ./src/Srota/Srota.csproj \
+          --configuration Release \
+          -o ./nupkgs \
+          /p:PackageVersion=${{ github.ref_name }} \
+          --no-build
+
+    - name: Request NuGet temporary API key
+      run: |
+        # Example assuming nuget CLI or custom logic to exchange OIDC token for a temporary key
+        # This part depends on nuget.org instructions for trusted publishing
+        # e.g. dotnet nuget trust-publish (hypothetical) ...
+
+    - name: Publish to NuGet.org
+      run: |
+        for pkg in ./nupkgs/*.nupkg; do
+          dotnet nuget push "$pkg" \
+            -s https://api.nuget.org/v3/index.json \
+            # no -k or use the temp key from previous step
+        done
