@@ -3,7 +3,8 @@ name: Publish Srota to NuGet (Trusted Publishing)
 on:
   push:
     tags:
-      - "v*.*.*"   # e.g. v1.2.3
+      - "v*.*.*-*"
+      - "v*.*.*"
 
 permissions:
   id-token: write     # Required for OIDC
