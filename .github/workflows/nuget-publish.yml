@@ -53,9 +53,7 @@ jobs:
           /p:PackageVersion=${{ steps.version.outputs.version }} \
           --no-build
 
-    # ⬇⬇ This is the Trusted Publishing step from NuGet.org ⬇⬇
     - name: Publish to NuGet via Trusted Publishing
       uses: NuGet/NuGet-Trusted-Publisher@v1
       with:
         nuget-folder: "./nupkgs"
-        # No API key required — handled automatically!
