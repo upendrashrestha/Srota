@@ -13,6 +13,7 @@ permissions:
 jobs:
   build-pack-publish:
     runs-on: ubuntu-latest
+    environment: release
 
     steps:
     - name: Checkout
