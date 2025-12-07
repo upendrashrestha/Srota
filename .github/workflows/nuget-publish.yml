@@ -72,7 +72,10 @@ jobs:
         echo "=== Packages Created ==="
         ls -lh ./nupkgs/
 
+     # Step: Publish to NuGet
     - name: Publish to NuGet via Trusted Publishing
-      uses: NuGet/NuGet-Trusted-Publisher@v1
-      with:
-        nuget-folder: "./nupkgs"
+      run: |
+        dotnet nuget push ./nupkgs/*.nupkg \
+          --source https://api.nuget.org/v3/index.json \
+          --skip-duplicate
+      shell: bash
