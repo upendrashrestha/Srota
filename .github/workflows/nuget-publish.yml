@@ -23,35 +23,53 @@ jobs:
       with:
         dotnet-version: "8.x"
 
+   # Restore
     - name: Restore
       run: dotnet restore
-
+    
+    # Build
     - name: Build
       run: dotnet build --configuration Release --no-restore
-
-    - name: Run Tests
+    
+    # Test
+    - name: Test
       run: |
-        if compgen -G "*Tests/*.csproj" > /dev/null; then
-          dotnet test --no-build --configuration Release
+        TEST_PROJECTS=$(find tests -name "*.csproj" 2>/dev/null || true)
+        if [ -n "$TEST_PROJECTS" ]; then
+          dotnet test --no-build --configuration Release --verbosity normal
         else
-          echo "No tests found — skipping."
+          echo "No tests found"
         fi
-
-    - name: Determine Package Version
+    
+    # Version
+    - name: Get Version
       id: version
       run: |
-        TAG=${GITHUB_REF#refs/tags/}
-        VERSION=${TAG#v}
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/v}
+        else
+          VERSION="1.0.0-preview.$(date +%Y%m%d%H%M%S)"
+        fi
         echo "version=$VERSION" >> $GITHUB_OUTPUT
-      shell: bash
-
-    - name: Pack
+        echo "Package version: $VERSION"
+    
+    # Pack
+    - name: Pack Projects
       run: |
-        dotnet pack ./src/Srota.Core/Srota.Core.csproj \
-          --configuration Release \
-          -o ./nupkgs \
-          /p:PackageVersion=${{ steps.version.outputs.version }} \
-          --no-build
+        mkdir -p ./nupkgs
+        
+        # Pack Srota.Core
+        if [ -f "src/Srota.Core/Srota.Core.csproj" ]; then
+          echo "Packing Srota.Core..."
+          dotnet pack src/Srota.Core/Srota.Core.csproj \
+            -c Release \
+            -o ./nupkgs \
+            --no-build \
+            /p:PackageVersion=${{ steps.version.outputs.version }}
+        fi
+        
+        echo "=== Packages Created ==="
+        ls -lh ./nupkgs/
 
     - name: Publish to NuGet via Trusted Publishing
       uses: NuGet/NuGet-Trusted-Publisher@v1
