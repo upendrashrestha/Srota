@@ -53,7 +53,14 @@ jobs:
         fi
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Package version: $VERSION"
-    
+
+     # Get a short-lived NuGet API key
+    - name: NuGet login (OIDC → temp API key)
+      uses: NuGet/login@v1
+      id: login
+      with:
+        user: upendrashrestha
+         
     # Pack
     - name: Pack Projects
       run: |
@@ -76,6 +83,7 @@ jobs:
     - name: Publish to NuGet via Trusted Publishing
       run: |
         dotnet nuget push ./nupkgs/*.nupkg \
+          --api-key ${{steps.login.outputs.NUGET_API_KEY}}
           --source https://api.nuget.org/v3/index.json \
           --skip-duplicate
       shell: bash
