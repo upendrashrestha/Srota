@@ -47,7 +47,7 @@ jobs:
 
     - name: Pack
       run: |
-        dotnet pack ./Srota.Core/Srota.Core.csproj \
+        dotnet pack ./src/Srota.Core/Srota.Core.csproj \
           --configuration Release \
           -o ./nupkgs \
           /p:PackageVersion=${{ steps.version.outputs.version }} \
