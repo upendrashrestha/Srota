@@ -83,7 +83,7 @@ jobs:
     - name: Publish to NuGet via Trusted Publishing
       run: |
         dotnet nuget push ./nupkgs/*.nupkg \
-          --api-key ${{steps.login.outputs.NUGET_API_KEY}}
+          --api-key ${{steps.login.outputs.NUGET_API_KEY}} \
           --source https://api.nuget.org/v3/index.json \
           --skip-duplicate
       shell: bash
